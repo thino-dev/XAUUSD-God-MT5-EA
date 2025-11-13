@@ -43,10 +43,10 @@ int OnInit()
     return(INIT_FAILED);
   }
 
-  int stops_level, freeze_level;
+  // Verify trading is allowed
   if(!SymbolInfoInteger(sym, SYMBOL_TRADE_MODE)) 
   { 
-    LogError("INIT","SymbolInfoInteger failed", GetLastError()); 
+    LogError("INIT","Trading not allowed for symbol", GetLastError()); 
   }
 
   datetime t0 = iTime(sym, PERIOD_M5, 0);
@@ -123,10 +123,43 @@ void OnTick()
 
   if(!NewBarGuard(PERIOD_M5, g_lastBar_M5)) return;
 
-  if(!PreTradeGate(now)) return;
+  // ADDED: Diagnostic logging for gate failures
+  if(!PreTradeGate(now)) 
+  {
+    int spread = (int)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+    double dd = DD_CurrentPercent();  // Function from trade_manager.mqh
+    double atr_val = ATR(1);
+    string reason = "";
+    
+    if(!TM_DD_GateOK())
+    {
+      reason += "DD=" + DoubleToString(dd, 2) + "% ";
+    }
+    
+    reason += "Spread=" + IntegerToString(spread);
+    if(atr_val != EMPTY_VALUE)
+      reason += " ATR=" + DoubleToString(atr_val, 2);
+    
+    LogEvent("GATE", "Blocked: " + reason);
+    return;
+  }
 
   Signal sig;
-  if(!BuildSignal(sig) || !sig.valid) return;
+  
+  // ADDED: Diagnostic logging for signal failures
+  if(!BuildSignal(sig) || !sig.valid) 
+  {
+    Regime r = DetectRegime();
+    double adx_val = ADX(1);
+    string regime_str = (r == REGIME_RANGE ? "RANGE" : "TREND");
+    string msg = "No signal - Regime=" + regime_str;
+    
+    if(adx_val != EMPTY_VALUE)
+      msg += " ADX=" + DoubleToString(adx_val, 2);
+    
+    LogEvent("SIGNAL", msg);
+    return;
+  }
 
   double lot = ComputeLot((sig.entry > 0.0 ? sig.entry : 0.0), sig.sl);
   if(lot <= 0.0) 
