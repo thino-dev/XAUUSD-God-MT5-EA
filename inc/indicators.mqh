@@ -53,75 +53,93 @@ void FreeIndicators()
    }
 }
 
+//+------------------------------------------------------------------+
+//| FIXED: Proper ArraySetAsSeries and array sizing                  |
+//+------------------------------------------------------------------+
 double ATR(const int bar_index)
 {
-   if(bar_index < 1) return EMPTY_VALUE;
+   if(bar_index < 0) return EMPTY_VALUE;
    
-   double arr[1];
-   if(CopyBuffer(g_handleATR, 0, bar_index, 1, arr) <= 0)
+   double arr[];
+   ArraySetAsSeries(arr, true);
+   
+   if(CopyBuffer(g_handleATR, 0, 0, bar_index + 1, arr) <= bar_index)
       return EMPTY_VALUE;
    
-   if(arr[0] == EMPTY_VALUE)
+   if(arr[bar_index] == EMPTY_VALUE)
       return EMPTY_VALUE;
    
-   return arr[0];
+   return arr[bar_index];
 }
 
 double ADX(const int bar_index)
 {
-   if(bar_index < 1) return EMPTY_VALUE;
+   if(bar_index < 0) return EMPTY_VALUE;
    
-   double arr[1];
-   if(CopyBuffer(g_handleADX, 0, bar_index, 1, arr) <= 0)
+   double arr[];
+   ArraySetAsSeries(arr, true);
+   
+   if(CopyBuffer(g_handleADX, 0, 0, bar_index + 1, arr) <= bar_index)
       return EMPTY_VALUE;
    
-   if(arr[0] == EMPTY_VALUE)
+   if(arr[bar_index] == EMPTY_VALUE)
       return EMPTY_VALUE;
    
-   return arr[0];
+   return arr[bar_index];
 }
 
 double EMA(const int bar_index)
 {
-   if(bar_index < 1) return EMPTY_VALUE;
+   if(bar_index < 0) return EMPTY_VALUE;
    
-   double arr[1];
-   if(CopyBuffer(g_handleEMA, 0, bar_index, 1, arr) <= 0)
+   double arr[];
+   ArraySetAsSeries(arr, true);
+   
+   if(CopyBuffer(g_handleEMA, 0, 0, bar_index + 1, arr) <= bar_index)
       return EMPTY_VALUE;
    
-   if(arr[0] == EMPTY_VALUE)
+   if(arr[bar_index] == EMPTY_VALUE)
       return EMPTY_VALUE;
    
-   return arr[0];
+   return arr[bar_index];
 }
 
 double RSI(const int bar_index)
 {
-   if(bar_index < 1) return EMPTY_VALUE;
+   if(bar_index < 0) return EMPTY_VALUE;
    
-   double arr[1];
-   if(CopyBuffer(g_handleRSI, 0, bar_index, 1, arr) <= 0)
+   double arr[];
+   ArraySetAsSeries(arr, true);
+   
+   if(CopyBuffer(g_handleRSI, 0, 0, bar_index + 1, arr) <= bar_index)
       return EMPTY_VALUE;
    
-   if(arr[0] == EMPTY_VALUE)
+   if(arr[bar_index] == EMPTY_VALUE)
       return EMPTY_VALUE;
    
-   return arr[0];
+   return arr[bar_index];
 }
 
+//+------------------------------------------------------------------+
+//| FIXED: Proper volume MA calculation with ArraySetAsSeries        |
+//+------------------------------------------------------------------+
 double VolumeMA(const int bar_index)
 {
-   if(Vol_MA_Period <= 0 || bar_index < (Vol_MA_Period - 1))
-      return EMPTY_VALUE;
+   if(Vol_MA_Period <= 0) return EMPTY_VALUE;
+   if(bar_index < 0) return EMPTY_VALUE;
+   
+   int start_bar = bar_index;
+   int count = Vol_MA_Period;
    
    long vol_arr[];
-   int copied = CopyTickVolume(g_symbol, g_tf, bar_index - (Vol_MA_Period - 1), Vol_MA_Period, vol_arr);
+   ArraySetAsSeries(vol_arr, true);
+   int copied = CopyTickVolume(g_symbol, g_tf, 0, start_bar + count, vol_arr);
    
-   if(copied < Vol_MA_Period)
+   if(copied < (start_bar + count))
       return EMPTY_VALUE;
    
    double sum = 0.0;
-   for(int i = 0; i < Vol_MA_Period; i++)
+   for(int i = start_bar; i < start_bar + Vol_MA_Period; i++)
    {
       sum += (double)vol_arr[i];
    }
