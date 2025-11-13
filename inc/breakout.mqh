@@ -125,14 +125,14 @@ Signal ScanAndSignal_Breakout()
       return sig;
    }
 
-   // 6) Optional volume confirmation
-   if(Vol_MA_Period > 0 && Vol_Min_Ratio > 0.0)
-   {
-      if(!VolumeConfirm())
-      {
-         return sig;
-      }
-   }
+   // 6) Optional volume confirmation --- COMENTED OUT FOR TESTING
+//   if(Vol_MA_Period > 0 && Vol_Min_Ratio > 0.0)
+//   {
+//      if(!VolumeConfirm())
+//      {
+//         // return sig;
+//      }
+//   }
 
    // 7) ATR-based SL sizing with MIN_SL_POINTS baseline
    double atr1 = ATR(1);
